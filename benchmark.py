@@ -26,7 +26,7 @@ if __name__ == '__main__':
     verbose = args.verbose
 
     # Send GET request specified number of times and report latencies
-    for target, suffix in [("Transaction", "txn"), ("Stored Procedure", "sp")]:
+    for target, suffix in [("Stored Procedure", "sp"), ("Transaction", "txn")]:
         latencies = []
         with requests.Session() as session:
             for i in range(num_executions):
