@@ -18,10 +18,10 @@ npx dbos-cloud app register -d <db-name>
 npx dbos-cloud app deploy
 ```
 
-Then, run the benchmark, outputting results both with and without stored procedures:
+Then, run the benchmark:
 
 ```
-python3 benchmarks/benchmark_dbos.py -u <app-url> -i <functions-per-workflow> -n <number-of-iterations>
+python3 benchmark.py -u <app-url> -n <number-of-iterations> -o <operations-per-transaction>
 ```
 
 To obtain your DBOS app URL, run `npx dbos-cloud app status` in the DBOS app directory.
