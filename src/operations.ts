@@ -1,4 +1,5 @@
-import { StoredProcedure, StoredProcedureContext, Workflow, WorkflowContext, GetApi, ArgSource, ArgSources } from '@dbos-inc/dbos-sdk';
+import { StoredProcedure, StoredProcedureContext, GetApi, HandlerContext, TransactionContext, Transaction } from '@dbos-inc/dbos-sdk';
+import { Knex } from 'knex';
 
 // The schema of the database table used in this example.
 export interface dbos_hello {
@@ -6,31 +7,49 @@ export interface dbos_hello {
     greet_count: number;
 }
 
-export class StoredProcTest {
-    @GetApi('/greet_count/:user')
-    @Workflow()
-    static async getGreetCountWorkflow(ctxt: WorkflowContext, @ArgSource(ArgSources.URL) user: string) {
-        return ctxt.invoke(StoredProcTest).getGreetCount(user);
+export class StoredProcBenchmark {
+
+    @GetApi('/sp/:iterations')
+    static async benchmarkStoredProc(ctxt: HandlerContext, iterations: number) {
+        const startTime = performance.now();
+        const output = await ctxt.invoke(StoredProcBenchmark).runStoredProc("dbos", iterations);
+        const elapsedTime = performance.now() - startTime;
+        return {
+            output: output,
+            runtime: elapsedTime,
+        };
     }
 
-    @StoredProcedure({ readOnly: true })
-    static async getGreetCount(ctxt: StoredProcedureContext, user: string): Promise<number> {
-        const query = "SELECT greet_count FROM dbos_hello WHERE name = $1;";
-        const { rows } = await ctxt.query<dbos_hello>(query, [user]);
-        return rows.length === 0 ? 0 : rows[0].greet_count;
+    @StoredProcedure()
+    static async runStoredProc(ctxt: StoredProcedureContext, user: string, iterations: number): Promise<string> {
+        let greet_count = null;
+        for (let i = 0; i < iterations; i++) {
+            const query = "INSERT INTO dbos_hello (name, greet_count) VALUES ($1, 1) ON CONFLICT (name) DO UPDATE SET greet_count = dbos_hello.greet_count + 1 RETURNING greet_count;";
+            const { rows } = await ctxt.query<dbos_hello>(query, [user]);
+            greet_count = rows[0].greet_count;
+        }
+        return `Hello, ${user}! You have been greeted ${greet_count} times.\n`;
     }
 
-    @GetApi('/hello/:user')
-    @Workflow()
-    static async helloWorkflow(ctxt: WorkflowContext, @ArgSource(ArgSources.URL) user: string) {
-        return ctxt.invoke(StoredProcTest).helloProcedure(user);
+    @GetApi('/txn/:iterations')
+    static async benchmarkTransaction(ctxt: HandlerContext, iterations: number) {
+        const startTime = performance.now();
+        const output = await ctxt.invoke(StoredProcBenchmark).runTransaction("dbos", iterations);
+        const elapsedTime = performance.now() - startTime;
+        return {
+            output: output,
+            runtime: elapsedTime,
+        };
     }
 
-    @StoredProcedure()  // Run this function as a database transaction
-    static async helloProcedure(ctxt: StoredProcedureContext, user: string): Promise<string> {
-        const query = "INSERT INTO dbos_hello (name, greet_count) VALUES ($1, 1) ON CONFLICT (name) DO UPDATE SET greet_count = dbos_hello.greet_count + 1 RETURNING greet_count;";
-        const { rows } = await ctxt.query<dbos_hello>(query, [user]);
-        const greet_count = rows[0].greet_count;
+    @Transaction()
+    static async runTransaction(ctxt: TransactionContext<Knex>, user: string, iterations: number): Promise<string> {
+        let greet_count = null;
+        for (let i = 0; i < iterations; i++) {
+            const query = "INSERT INTO dbos_hello (name, greet_count) VALUES (?, 1) ON CONFLICT (name) DO UPDATE SET greet_count = dbos_hello.greet_count + 1 RETURNING greet_count;";
+            const { rows } = await ctxt.client.raw(query, [user]) as { rows: dbos_hello[] };
+            greet_count = rows[0].greet_count;
+        }
         return `Hello, ${user}! You have been greeted ${greet_count} times.\n`;
     }
 }
