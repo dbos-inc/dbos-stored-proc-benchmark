@@ -1,14 +1,14 @@
 # DBOS Stored Procedure Benchmarks
 
-This repository contains code to benchmark the performance of DBOS stored procedures--specifically, how much compiling functions to stored procedures improves their latency.
+This repository contains code to benchmark the performance of DBOS stored procedures. Specifically, it measures how much compiling functions to stored procedures improves their latency.
 
 # Benchmark Information
 
-The benchmark runs a transaction performing a varying number of simple upsert operations. It reports that transaction's server-side latency.
+The benchmark runs a transaction performing a varying number of simple upsert operations. It reports that transaction's server-side latency with and without compilation to a PostgreSQL stored procedure.
 
 # Benchmark Instructions
 
-To run the benchmarks, deploy the application to DBOS Cloud (assuming you already have a DBOS Cloud account):
+To run the benchmark, deploy the application to DBOS Cloud (assuming you already have a DBOS Cloud account):
 
 ```
 npm i
