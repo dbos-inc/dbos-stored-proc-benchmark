@@ -11,6 +11,7 @@
   },
   "devDependencies": {
     "@dbos-inc/dbos-cloud": "^1.17.14",
+    "@dbos-inc/dbos-compiler": "^1.17.14",
     "@dbos-inc/eslint-plugin": "^0.0.6",
     "@types/jest": "^29.5.12",
     "@types/supertest": "^2.0.16",
